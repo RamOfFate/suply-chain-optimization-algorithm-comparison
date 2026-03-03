@@ -8,7 +8,7 @@ from scipy.optimize import linprog
 
 def solve_simplex(data_path):
     process = psutil.Process(os.getpid())
-    last_cost = [120000.0] # Using a list to allow modification inside callback
+    last_cost = [120000.0]
 
     try:
         with open(data_path, 'r') as f:
@@ -38,20 +38,16 @@ def solve_simplex(data_path):
             iteration[0] += 1
             current_cost = res.fun if res.fun is not None else last_cost[0]
 
-            # --- TELEMETRY ---
             mem = process.memory_info().rss / (1024 * 1024)
             velocity = last_cost[0] - current_cost
             last_cost[0] = current_cost
 
-            # Send to C++: DATA|step|cost|mem|velocity
             print(f"DATA|{iteration[0]}|{current_cost:.2f}|{mem:.2f}|{velocity:.2f}", flush=True)
 
-            time.sleep(0.05) # Keeps the dashboard smooth
+            time.sleep(0.05)
 
-        # 'revised simplex' is required to use the callback function
         linprog(c, A_eq=A_eq, b_eq=b_eq, method='revised simplex', callback=callback)
 
-        # Final Finish Point
         mem = process.memory_info().rss / (1024 * 1024)
         print(f"DATA|{iteration[0] + 1}|7734.40|{mem:.2f}|0.00", flush=True)
 

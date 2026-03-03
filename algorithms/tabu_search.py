@@ -5,17 +5,10 @@ import sys
 import os
 import psutil # Needed for memory tracking
 
-# ─────────────────────────────────────────────
-# 1. DATA LOADING
-# ─────────────────────────────────────────────
-
 def load_benchmark(filepath):
     with open(filepath, 'r') as f:
         return json.load(f)
 
-# ─────────────────────────────────────────────
-# 2. COST FUNCTION
-# ─────────────────────────────────────────────
 
 def evaluate(open_warehouses, assignment, data):
     total_cost = 0.0
@@ -39,7 +32,6 @@ def solve_tabu(data, max_iterations=500, tabu_tenure=15):
     n_wh = data['n_warehouses']
     n_cl = data['n_clients']
 
-    # Initial Solution
     current_open = [True] * n_wh
     current_assignment = []
     for c in range(n_cl):
@@ -52,14 +44,12 @@ def solve_tabu(data, max_iterations=500, tabu_tenure=15):
 
     tabu_list = {}
 
-    # Initial Report
     mem = process.memory_info().rss / (1024 * 1024)
     print(f"DATA|0|{best_cost:.2f}|{mem:.2f}|0.00", flush=True)
 
     for iteration in range(1, max_iterations + 1):
         neighbors = []
 
-        # Generate neighbors
         for _ in range(20):
             move_type = random.choice(['toggle_wh', 'reassign_client'])
             neighbor_open = list(current_open)
@@ -98,15 +88,11 @@ def solve_tabu(data, max_iterations=500, tabu_tenure=15):
         if current_cost < best_cost:
             best_cost = current_cost
 
-        # --- TELEMETRY CALCULATIONS ---
-        # Calculate velocity (improvement since last report)
         velocity = last_reported_cost - best_cost
         last_reported_cost = best_cost
 
-        # Get memory in MB
         mem = process.memory_info().rss / (1024 * 1024)
 
-        # Send to C++: DATA|step|cost|mem|velocity
         print(f"DATA|{iteration}|{best_cost:.2f}|{mem:.2f}|{velocity:.2f}", flush=True)
 
 if __name__ == "__main__":

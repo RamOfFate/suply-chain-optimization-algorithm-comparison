@@ -35,23 +35,19 @@ class BranchAndBoundSolver:
         return bound
 
     def report(self):
-        """Sends telemetry to C++ Dashboard"""
         mem = self.process.memory_info().rss / (1024 * 1024)
         velocity = self.last_reported_cost - self.best_cost
         self.last_reported_cost = self.best_cost
 
-        # We cap the visual cost at 120k for the dashboard
         display_cost = min(self.best_cost, 120000.0)
         print(f"DATA|{self.nodes_explored}|{display_cost:.2f}|{mem:.2f}|{velocity:.2f}", flush=True)
 
     def solve(self, wh_index, current_status):
         self.nodes_explored += 1
 
-        # Report every 50 nodes so the dashboard looks smooth
         if self.nodes_explored % 50 == 0:
             self.report()
 
-        # Base Case
         if wh_index == self.n_wh:
             if not any(s == 1 for s in current_status): return
 
@@ -68,12 +64,10 @@ class BranchAndBoundSolver:
                 self.best_cost = current_total
             return
 
-        # Pruning
         lb = self.get_lower_bound(current_status)
         if lb >= self.best_cost:
             return
 
-        # Branching
         current_status[wh_index] = 1
         self.solve(wh_index + 1, current_status)
 
@@ -89,10 +83,8 @@ if __name__ == "__main__":
     solver = BranchAndBoundSolver(problem_data)
     initial_status = [-1] * solver.n_wh
 
-    # Initial Report
     solver.report()
 
     solver.solve(0, initial_status)
 
-    # Final Report
     solver.report()
